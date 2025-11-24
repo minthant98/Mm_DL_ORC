@@ -7,11 +7,19 @@ import shutil
 # ----------------------
 # Paths (Windows style)
 # ----------------------
-INPUT_IMG_DIR = r"C:\Users\minthanttin\Desktop\Myanmar_DL_Datasets\datasets\images\train"
-INPUT_LABEL_DIR = r"C:\Users\minthanttin\Desktop\Myanmar_DL_Datasets\datasets\labels\train"
+#INPUT_IMG_DIR = r"C:\Users\minthanttin\Desktop\Myanmar_DL_Datasets\datasets\images\train"
+#INPUT_LABEL_DIR = r"C:\Users\minthanttin\Desktop\Myanmar_DL_Datasets\datasets\labels\train"
 
-OUTPUT_IMG_DIR = r"C:\Users\minthanttin\Desktop\Myanmar_DL_Datasets\datasets\augmented\images"
-OUTPUT_LABEL_DIR = r"C:\Users\minthanttin\Desktop\Myanmar_DL_Datasets\datasets\augmented\labels"
+#OUTPUT_IMG_DIR = r"C:\Users\minthanttin\Desktop\Myanmar_DL_Datasets\datasets\augmented\images"
+#OUTPUT_LABEL_DIR = r"C:\Users\minthanttin\Desktop\Myanmar_DL_Datasets\datasets\augmented\labels"
+
+# Training images and labels
+INPUT_IMG_DIR = '/content/Mm_DL_ORC/datasets/images/train'
+INPUT_LABEL_DIR = '/content/Mm_DL_ORC/datasets/labels/train'
+
+# Augmented output images and labels
+OUTPUT_IMG_DIR = '/content/Mm_DL_ORC/datasets/augmented/images'
+OUTPUT_LABEL_DIR = '/content/Mm_DL_ORC/datasets/augmented/labels'
 
 os.makedirs(OUTPUT_IMG_DIR, exist_ok=True)
 os.makedirs(OUTPUT_LABEL_DIR, exist_ok=True)

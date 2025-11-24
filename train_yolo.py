@@ -4,8 +4,14 @@ import os
 # ----------
 #1. Dataset path
 # ----------
-dataset_path = 'desktop/Myanmar_DL_Datasets/datasets'
-data_yaml = "C:\Users\minthanttin\Desktop\Myanmar_DL_Datasets\datasets\data.yaml"
+
+#dataset_path = 'desktop/Myanmar_DL_Datasets/datasets'
+#data_yaml = "C:\Users\minthanttin\Desktop\Myanmar_DL_Datasets\datasets\data.yaml"
+# Path to dataset folder in Colab
+dataset_path = '/content/Mm_DL_ORC/datasets'
+
+# Path to data.yaml in Colab
+data_yaml = '/content/Mm_DL_ORC/datasets/data.yaml'
 
 # ----------
 #2. Model Selection
