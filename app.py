@@ -144,3 +144,57 @@ if uploaded_file is not None:
                         
             st.subheader("JSON Output (Raw)")
             st.json(extracted_data)
+            
+        #Ground Truth input and accuracy display
+        st.subheader("📝 Manual Ground Truth Verification")
+        st.info("Enter the correct values from the license to calculate the Exact Match Rate.")
+        
+        # Initialize a dictionary to hold manual inputs (Ground Truth)
+        ground_truth = {}
+        
+        # Create input fields for manual verification
+        # The key names must match your extracted_data keys
+        
+        gt_col1, gt_col2 = st.columns(2)
+        
+        # Use st.session_state to persist data if necessary, 
+        # but for simplicity, we'll use a local dictionary for this run
+        
+        with gt_col1:
+            ground_truth['No'] = st.text_input("Correct License No. (Ground Truth)", "")
+            ground_truth['Name_Burmese'] = st.text_input("Correct Name (Burmese)", "")
+            ground_truth['DOB'] = st.text_input("Correct Date of Birth (DD-MM-YYYY)", "")
+            ground_truth['Valid_up_to'] = st.text_input("Correct Valid Up To (DD-MM-YYYY)", "")
+            
+        with gt_col2:
+            ground_truth['Name'] = st.text_input("Correct Name (English/Latin)", "")
+            ground_truth['NRC_no'] = st.text_input("Correct NRC No. (e.g., 12/ABC(N)XXXXXX)", "")
+            ground_truth['NRC_no_Burmese'] = st.text_input("Correct NRC No. (Burmese Script)", "")
+            ground_truth['Blood_Type'] = st.text_input("Correct Blood Type", "")
+
+
+        if st.button("Calculate Accuracy"):
+            total_fields = 0
+            correct_fields = 0
+            
+            # Compare extracted data against non-empty ground truth fields
+            for key, extracted_value in extracted_data.items():
+                gt_value = ground_truth.get(key)
+                
+                # Only evaluate fields where a ground truth value was provided
+                if gt_value:
+                    total_fields += 1
+                    # Strip whitespace to ensure a fair comparison
+                    if str(extracted_value).strip() == str(gt_value).strip():
+                        correct_fields += 1
+            
+            if total_fields > 0:
+                emr = (correct_fields / total_fields) * 100
+                st.metric(
+                    label="Field Exact Match Rate (EMR)", 
+                    value=f"{emr:.2f}%", 
+                    help=f"{correct_fields} out of {total_fields} fields matched the Ground Truth exactly."
+                )
+            else:
+                st.warning("Please enter Ground Truth values in the text boxes above to calculate accuracy.")
+        
