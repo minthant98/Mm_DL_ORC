@@ -21,10 +21,14 @@ MODEL_NAME = "gemini-2.5-flash"
 # --- 2. Define the Structured Output Schema ---
 
 class DriverLicenseData(pydantic.BaseModel):
-    """Schema for extracting structured data from a driver's license."""
+    """Schema for extracting structured data from a Myanmar driver's license, including Burmese script."""
     No: str = pydantic.Field(description="The license number/ID from the card.")
-    Name: str = pydantic.Field(description="The full name of the license holder, exactly as written.")
+    Name: str = pydantic.Field(description="The full name of the license holder, exactly as written (English/Transliteration).")
+    # --- NEW FIELDS FOR BURMESE TEXT ---
+    Name_Burmese: str = pydantic.Field(description="The full name of the license holder as written in Burmese script (e.g., ကျော်စွာမင်း).")
     NRC_no: str = pydantic.Field(description="The National Registration Card number (e.g., 12/ABC(N)XXXXXX).")
+    NRC_no_Burmese: str = pydantic.Field(description="The numeric/code portion of the NRC number written in Burmese (e.g., ၁၂/ဒဂန(နိုင်)၀၃၅၃၄၄).")
+    # ------------------------------------
     DOB: str = pydantic.Field(description="The Date of Birth in DD-MM-YYYY format.")
     Blood_Type: str = pydantic.Field(description="The Blood Type (e.g., A, B, O, AB).")
     Valid_up_to: str = pydantic.Field(description="The expiry date of the license in DD-MM-YYYY format.")
