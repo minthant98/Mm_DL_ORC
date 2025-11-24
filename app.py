@@ -5,7 +5,7 @@ from google.genai import types
 
 # --- Configuration ---
 # Set your API Key as an environment variable (best practice)
-# os.environ["GEMINI_API_KEY"] = "YOUR_API_KEY"
+os.environ["GEMINI_API_KEY"] = "AIzaSyByIZjACIwYmamMfye3rSVDJH3r6iYluVQ"
 try:
     client = genai.Client()
 except Exception as e:
