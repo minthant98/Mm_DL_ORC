@@ -1,11 +1,18 @@
 #data.yaml tells YOLO where to find the dataset and how many classes there are
 
 #path to the dataset root folder
-path: C:\Users\minthanttin\Desktop\Myanmar_DL_Datasets\datasets
+#path: C:\Users\minthanttin\Desktop\Myanmar_DL_Datasets\datasets
 
 #subfolders for training, validation images
-train: C:\Users\minthanttin\Desktop\Myanmar_DL_Datasets\datasets\images\train
-val: C:\Users\minthanttin\Desktop\Myanmar_DL_Datasets\datasets\images\val
+#train: C:\Users\minthanttin\Desktop\Myanmar_DL_Datasets\datasets\images\train
+#val: C:\Users\minthanttin\Desktop\Myanmar_DL_Datasets\datasets\images\val
+
+# path to the dataset root folder
+path: /content/Mm_DL_ORC/datasets
+
+# subfolders for training and validation images
+train: /content/Mm_DL_ORC/datasets/images/train
+val: /content/Mm_DL_ORC/datasets/images/val
 
 #number of classes
 nc: 6
