@@ -1,134 +1,84 @@
-import streamlit as st
-import cv2
-import numpy as np
-from ultralytics import YOLO
-from PIL import Image
-import easyocr
-import re
+import os
+import pydantic
+from google import genai
+from google.genai import types
 
-# -------------------------------------------------
-# CONFIG
-# -------------------------------------------------
-st.set_page_config(
-    page_title="Myanmar Driving License Extractor",
-    layout="wide"
-)
+# --- Configuration ---
+# Set your API Key as an environment variable (best practice)
+# os.environ["GEMINI_API_KEY"] = "YOUR_API_KEY"
+try:
+    client = genai.Client()
+except Exception as e:
+    print(f"Error initializing Gemini client: {e}")
+    print("Please ensure your GEMINI_API_KEY is set correctly.")
+    exit()
 
-# -------------------------------------------------
-# LOAD YOLO MODEL
-# -------------------------------------------------
-@st.cache_resource
-def load_yolo():
-    model_path = r"C:/Users/minthanttin/Desktop/Myanmar_DL_Datasets/runs/train/myanmar_dl/weights/best.pt"
-    return YOLO(model_path)
+# Define the model to use. Gemini 2.5 Flash is highly capable for vision and fast.
+MODEL_NAME = "gemini-2.5-flash"
+IMAGE_FILE_PATH = "img1.jpg" # Use the noisy image for a real test!
 
-yolo_model = load_yolo()
+# --- 3. Define the Structured Output Schema (The most important step) ---
 
-# -------------------------------------------------
-# LOAD EASYOCR
-# -------------------------------------------------
-@st.cache_resource
-def load_ocr():
-    return easyocr.Reader(['en'], gpu=False)
+class DriverLicenseData(pydantic.BaseModel):
+    """Schema for extracting structured data from a driver's license."""
+    No: str = pydantic.Field(description="The license number/ID from the card.")
+    Name: str = pydantic.Field(description="The full name of the license holder, exactly as written.")
+    NRC_no: str = pydantic.Field(description="The National Registration Card number (e.g., 12/ABC(N)XXXXXX).")
+    DOB: str = pydantic.Field(description="The Date of Birth in DD-MM-YYYY format.")
+    Blood_Type: str = pydantic.Field(description="The Blood Type (e.g., A, B, O, AB).")
+    Valid_up_to: str = pydantic.Field(description="The expiry date of the license in DD-MM-YYYY format.")
 
-ocr = load_ocr()
+# --- 4. Main Extraction Function ---
 
-# -------------------------------------------------
-# UTILITY: OCR TEXT CLEANER
-# -------------------------------------------------
-def clean_text(text):
-    return text.replace("\n", " ").strip()
+def extract_license_data(image_path: str) -> dict:
+    """Uploads the image and prompts Gemini for structured data extraction."""
+    
+    # Upload the image file to the Gemini service
+    print(f"Uploading file: {image_path}...")
+    image_file = client.files.upload(file=image_path)
+    
+    # Define the instruction prompt
+    prompt = (
+        "Analyze the attached Myanmar Driving License image, which may be blurry or at an angle. "
+        "Extract ONLY the specified information into the provided JSON schema. "
+        "Pay close attention to the Burmese labels for 'No.', 'Name', 'NRC no', 'DOB', 'Blood Type', and 'Valid up to'."
+    )
+    
+    # Configure the request to use the Pydantic schema
+    config = types.GenerateContentConfig(
+        response_mime_type="application/json",
+        response_schema=DriverLicenseData,
+    )
+    
+    print("Sending request to Gemini...")
+    try:
+        response = client.models.generate_content(
+            model=MODEL_NAME,
+            contents=[prompt, image_file],  # Multimodal prompt: text + image
+            config=config,
+        )
+        
+        # The response text will be a guaranteed JSON string adhering to the schema
+        extracted_json = response.text
+        
+        # Optional: Parse the JSON string back into a Python object for easy use
+        return DriverLicenseData.model_validate_json(extracted_json).model_dump()
+        
+    except Exception as e:
+        print(f"An error occurred during content generation: {e}")
+        return {"Error": "Extraction failed"}
+    finally:
+        # Clean up the uploaded file to save storage space
+        client.files.delete(name=image_file.name)
+        print(f"Cleaned up uploaded file: {image_file.name}")
 
-# -------------------------------------------------
-# UTILITY: DETECT & CROP USING YOLO
-# -------------------------------------------------
-def detect_and_crop(image):
-    results = yolo_model.predict(image, conf=0.4)
-    boxes = results[0].boxes.xyxy.cpu().numpy()
 
-    cropped_images = []
-    for i, box in enumerate(boxes):
-        x1, y1, x2, y2 = map(int, box)
-        crop = image[y1:y2, x1:x2]
-        cropped_images.append((i, crop))
+# --- Execution ---
+extracted_data = extract_license_data(IMAGE_FILE_PATH)
 
-    return results[0].plot(), cropped_images
-
-# -------------------------------------------------
-# UI HEADER
-# -------------------------------------------------
-st.title("🪪 Myanmar Driving License Detection + OCR")
-st.write("YOLOv8 + EasyOCR | Offline | Cropping + Auto Extraction")
-
-# -------------------------------------------------
-# SIDEBAR
-# -------------------------------------------------
-st.sidebar.title("Controls")
-use_webcam = st.sidebar.checkbox("Use Webcam")
-st.sidebar.info("Make sure your trained YOLO model path is correct.")
-
-# -------------------------------------------------
-# MAIN APP
-# -------------------------------------------------
-uploaded_file = None
-frame = None
-
-# --- Upload image ---
-if not use_webcam:
-    uploaded_file = st.file_uploader("Upload image", type=["png", "jpg", "jpeg"])
-    if uploaded_file:
-        img = Image.open(uploaded_file).convert("RGB")
-        frame = np.array(img)
-
-# --- Webcam mode ---
+print("\n### RESULTS FROM GEMINI API ###")
+if "Error" in extracted_data:
+    print(extracted_data["Error"])
 else:
-    cam = st.camera_input("Take a photo")
-    if cam:
-        img = Image.open(cam).convert("RGB")
-        frame = np.array(img)
-
-# -------------------------------------------------
-# PROCESS IMAGE
-# -------------------------------------------------
-if frame is not None:
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.subheader("Original Image")
-        st.image(frame, use_column_width=True)
-
-    # YOLO detection + cropping
-    annotated, crops = detect_and_crop(frame)
-
-    with col2:
-        st.subheader("YOLO Detection")
-        st.image(annotated, use_column_width=True)
-
-    st.markdown("---")
-    st.header("📌 Cropped Regions & OCR")
-
-    if len(crops) == 0:
-        st.warning("No driving license detected.")
-    else:
-        for idx, crop in crops:
-
-            st.subheader(f"Crop #{idx+1}")
-            st.image(crop, width=400)
-
-            # OCR
-            result = ocr.readtext(crop)
-
-            extracted_text = " ".join([clean_text(r[1]) for r in result])
-            st.write("**OCR Output:**")
-            st.success(extracted_text)
-
-            # Optional extraction rules
-            name_match = re.search(r"Name[: ]+([A-Za-z ]+)", extracted_text)
-            id_match = re.search(r"(\d{6,12})", extracted_text)
-
-            st.write("**Extracted Fields (Experimental):**")
-            st.json({
-                "Name": name_match.group(1) if name_match else "",
-                "ID Number": id_match.group(1) if id_match else ""
-            })
+    for key, value in extracted_data.items():
+        print(f"**{key}**: {value}")
