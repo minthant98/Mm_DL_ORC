@@ -1,0 +1,14 @@
+#data.yaml tells YOLO where to find the dataset and how many classes there are
+
+#path to the dataset root folder
+path: C:\Users\minthanttin\Desktop\Myanmar_DL_Datasets\datasets
+
+#subfolders for training, validation images
+train: C:\Users\minthanttin\Desktop\Myanmar_DL_Datasets\datasets\images\train
+val: C:\Users\minthanttin\Desktop\Myanmar_DL_Datasets\datasets\images\val
+
+#number of classes
+nc: 6
+
+#class names
+names: ['No.', 'Name', 'N.R.C. No', 'Date of Birth', 'Blood Type', 'Valid up to']
